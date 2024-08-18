@@ -1,12 +1,24 @@
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Not},
+};
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Tile(pub u64);
 
 impl Tile {
+    pub fn empty() -> Self {
+        Self(0)
+    }
+    pub fn full() -> Self {
+        Self(u64::MAX)
+    }
     pub fn get(&self, x: u8, y: u8) -> bool {
         let index = 8 * y + x;
         (self.0 >> index) & 1 == 1
+    }
+    pub fn is_empty(&self) -> bool {
+        self.0 == 0
     }
 
     #[must_use]
@@ -82,6 +94,62 @@ impl Tile {
             Rotate::Full => self.flip_xy(),
         }
     }
+
+    pub fn fill_bottom(n_rows: u8) -> Self {
+        const FIRST_ROW: u64 = 0xff000000_00000000;
+
+        let mut res = 0;
+        for i in 0..n_rows {
+            res |= FIRST_ROW >> (i * 8);
+        }
+        Self(res)
+    }
+
+    pub fn fill_right(n_cols: u8) -> Self {
+        const FIRST_COLUMN: u64 = 0x80808080_80808080;
+
+        let mut res = 0;
+        for i in 0..n_cols {
+            res |= FIRST_COLUMN >> i;
+        }
+        Self(res)
+    }
+}
+
+impl BitAnd for Tile {
+    type Output = Tile;
+
+    fn bitand(self, rhs: Tile) -> Self::Output {
+        Self(self.0 & rhs.0)
+    }
+}
+
+impl BitAndAssign for Tile {
+    fn bitand_assign(&mut self, rhs: Self) {
+        self.0 &= rhs.0;
+    }
+}
+
+impl BitOr for Tile {
+    type Output = Tile;
+
+    fn bitor(self, rhs: Tile) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
+}
+
+impl BitOrAssign for Tile {
+    fn bitor_assign(&mut self, rhs: Self) {
+        self.0 |= rhs.0;
+    }
+}
+
+impl Not for Tile {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -111,7 +179,7 @@ mod test {
 
     #[test]
     fn shift() {
-        let full = Tile(u64::MAX);
+        let full = Tile::full();
 
         for i in 0..8 {
             assert_ne!(full.shift_x(i).0, 0);

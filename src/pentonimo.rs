@@ -1,8 +1,11 @@
-use std::{fmt::Display, ops::Range, str::RSplitTerminator};
+use std::{fmt::Display, ops::Range};
+
+use strum::VariantArray;
 
 use crate::tile::{Rotate, Tile};
 
 #[derive(Debug, Clone, Copy, strum::VariantArray)]
+#[repr(u8)]
 pub enum PentonimoKind {
     F,
     L,
@@ -23,6 +26,155 @@ pub struct Pentonimo {
     kind: PentonimoKind,
     tile: Tile,
     bounds: PentonimoBounds,
+}
+
+pub struct PositionedPentonimo {
+    // normalized pentonimo
+    pentonimo: Pentonimo,
+    position: (u16, u16),
+    shape: (u8, u8),
+}
+
+impl PositionedPentonimo {
+    pub fn position(&self) -> (u16, u16) {
+        self.position
+    }
+
+    pub fn shape(&self) -> (u8, u8) {
+        self.shape
+    }
+
+    pub fn pentonimo(&self) -> Pentonimo {
+        self.pentonimo
+    }
+}
+
+impl Pentonimo {
+    pub fn kind(&self) -> PentonimoKind {
+        self.kind
+    }
+    pub fn tile(self) -> Tile {
+        self.tile
+    }
+    pub fn shape(&self) -> (u8, u8) {
+        (
+            self.bounds.end_x - self.bounds.start_x,
+            self.bounds.end_y - self.bounds.start_y,
+        )
+    }
+
+    pub fn position(self, x: u16, y: u16) -> PositionedPentonimo {
+        PositionedPentonimo {
+            pentonimo: self.normalize(),
+            position: (x, y),
+            shape: self.shape(),
+        }
+    }
+
+    pub fn variants(self) -> VariantIterator {
+        // use symmetry of self.kind
+
+        macro_rules! permutations {
+            (FLIP_ROTATE, $self: ident) => {{
+                let flipped = $self.flip_x();
+                VariantIterator::Asymetric(
+                    [
+                        $self,
+                        $self.rotate(Rotate::Right),
+                        $self.rotate(Rotate::Left),
+                        $self.rotate(Rotate::Full),
+                        flipped,
+                        flipped.rotate(Rotate::Right),
+                        flipped.rotate(Rotate::Left),
+                        flipped.rotate(Rotate::Full),
+                    ]
+                    .into_iter(),
+                )
+            }};
+            (ROTATE, $self: ident) => {
+                VariantIterator::Mirror(
+                    [
+                        $self,
+                        $self.rotate(Rotate::Right),
+                        $self.rotate(Rotate::Left),
+                        $self.rotate(Rotate::Full),
+                    ]
+                    .into_iter(),
+                )
+            };
+            (ROTATE_HALF, $self: ident) => {
+                VariantIterator::HalfRotational([$self, $self.rotate(Rotate::Right)].into_iter())
+            };
+        }
+
+        match self.kind {
+            PentonimoKind::F => permutations!(FLIP_ROTATE, self),
+            PentonimoKind::L => permutations!(FLIP_ROTATE, self),
+            PentonimoKind::N => permutations!(FLIP_ROTATE, self),
+            PentonimoKind::P => permutations!(FLIP_ROTATE, self),
+            PentonimoKind::T => permutations!(ROTATE, self),
+            PentonimoKind::U => permutations!(ROTATE, self),
+            PentonimoKind::V => permutations!(ROTATE, self),
+            PentonimoKind::W => permutations!(ROTATE, self),
+            PentonimoKind::I => permutations!(ROTATE_HALF, self),
+            PentonimoKind::X => VariantIterator::Rotational([self].into_iter()),
+            PentonimoKind::Y => permutations!(FLIP_ROTATE, self),
+            PentonimoKind::Z => permutations!(ROTATE, self),
+        }
+    }
+}
+
+pub enum VariantIterator {
+    Rotational(std::array::IntoIter<Pentonimo, 1>),
+    HalfRotational(std::array::IntoIter<Pentonimo, 2>),
+    Mirror(std::array::IntoIter<Pentonimo, 4>),
+    Asymetric(std::array::IntoIter<Pentonimo, 8>),
+}
+
+impl Iterator for VariantIterator {
+    type Item = Pentonimo;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            VariantIterator::Rotational(inner) => inner.next(),
+            VariantIterator::HalfRotational(inner) => inner.next(),
+            VariantIterator::Mirror(inner) => inner.next(),
+            VariantIterator::Asymetric(inner) => inner.next(),
+        }
+    }
+}
+
+#[test]
+fn number_of_variants() {
+    fn expected_count(kind: PentonimoKind) -> usize {
+        match kind {
+            PentonimoKind::F => 8,
+            PentonimoKind::L => 8,
+            PentonimoKind::N => 8,
+            PentonimoKind::P => 8,
+            PentonimoKind::T => 4,
+            PentonimoKind::U => 4,
+            PentonimoKind::V => 4,
+            PentonimoKind::W => 4,
+            PentonimoKind::I => 2,
+            PentonimoKind::X => 1,
+            PentonimoKind::Y => 8,
+            PentonimoKind::Z => 4,
+        }
+    }
+
+    assert_eq!(
+        PentonimoKind::VARIANTS
+            .iter()
+            .copied()
+            .map(expected_count)
+            .sum::<usize>(),
+        63
+    );
+
+    assert!(PentonimoKind::VARIANTS
+        .iter()
+        .all(|&kind| Pentonimo::new(dbg!(kind)).variants().count() == expected_count(kind)));
 }
 
 #[derive(Clone, Copy)]
@@ -56,8 +208,8 @@ impl PentonimoBounds {
         (0..8).contains(&res).then_some(res as u8)
     }
     fn rotate_point(x: u8, y: u8, rotate: Rotate) -> (u8, u8) {
-        debug_assert!(x < 8);
-        debug_assert!(y < 8);
+        debug_assert!(x <= 8);
+        debug_assert!(y <= 8);
 
         let x = x as i8 - 4;
         let y = y as i8 - 4;
@@ -71,21 +223,21 @@ impl PentonimoBounds {
         ((x + 4) as u8, (y + 4) as u8)
     }
 
-    fn shift_x(self, d: i8) -> Option<Self> {
-        Some(Self {
-            start_x: Self::checked_add(self.start_x, d)?,
-            end_x: Self::checked_add(self.end_x, d)?,
+    fn shift_x(self, d: i8) -> Self {
+        Self {
+            start_x: (self.start_x as i8 + d).clamp(0, 7) as u8,
+            end_x: (self.end_x as i8 + d).clamp(0, 7) as u8,
             start_y: self.start_y,
             end_y: self.end_y,
-        })
+        }
     }
-    fn shift_y(self, d: i8) -> Option<Self> {
-        Some(Self {
+    fn shift_y(self, d: i8) -> Self {
+        Self {
             start_x: self.start_x,
             end_x: self.end_x,
-            start_y: Self::checked_add(self.start_y, d)?,
-            end_y: Self::checked_add(self.end_y, d)?,
-        })
+            start_y: (self.start_y as i8 + d).clamp(0, 7) as u8,
+            end_y: (self.end_y as i8 + d).clamp(0, 7) as u8,
+        }
     }
 
     fn flip_x(self) -> Self {
@@ -142,19 +294,19 @@ impl Pentonimo {
             tile: self.tile.rotate(rotate),
         }
     }
-    pub fn shift_x(self, d: i8) -> Option<Self> {
-        Some(Self {
+    pub fn shift_x(self, d: i8) -> Self {
+        Self {
             kind: self.kind,
-            bounds: self.bounds.shift_x(d)?,
+            bounds: self.bounds.shift_x(d),
             tile: self.tile.shift_x(d),
-        })
+        }
     }
-    pub fn shift_y(self, d: i8) -> Option<Self> {
-        Some(Self {
+    pub fn shift_y(self, d: i8) -> Self {
+        Self {
             kind: self.kind,
-            bounds: self.bounds.shift_y(d)?,
+            bounds: self.bounds.shift_y(d),
             tile: self.tile.shift_y(d),
-        })
+        }
     }
     pub fn flip_x(self) -> Self {
         Self {
@@ -186,6 +338,21 @@ impl Pentonimo {
                 .shift_y(-(self.bounds.start_y as i8)),
             bounds: self.bounds.normalize(),
         }
+    }
+    pub fn is_empty(self) -> bool {
+        self.tile.is_empty()
+    }
+    pub fn shift_split(self, x: i8, y: i8) -> [Tile; 4] {
+        [(0, 0), (1, 0), (0, 1), (1, 1)].map(|(i, j)| {
+            let dx = x - 8 * i;
+            let dy = y - 8 * j;
+            // TODO: is this always the correct shift amount?
+            if dx.abs() < 8 && dy.abs() < 8 {
+                self.tile.shift_x(dx).shift_y(dy)
+            } else {
+                Tile::empty()
+            }
+        })
     }
 }
 
