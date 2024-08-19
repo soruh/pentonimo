@@ -1,10 +1,10 @@
-use std::{fmt::Display, ops::Range};
+use std::{collections::HashSet, fmt::Display, ops::Range};
 
 use strum::VariantArray;
 
 use crate::tile::{Rotate, Tile};
 
-#[derive(Debug, Clone, Copy, strum::VariantArray)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, strum::VariantArray)]
 #[repr(u8)]
 pub enum PentonimoKind {
     F,
@@ -21,18 +21,18 @@ pub enum PentonimoKind {
     Z,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Pentonimo {
     kind: PentonimoKind,
     tile: Tile,
     bounds: PentonimoBounds,
 }
 
+#[derive(Clone, Copy)]
 pub struct PositionedPentonimo {
     // normalized pentonimo
     pentonimo: Pentonimo,
     position: (u16, u16),
-    shape: (u8, u8),
 }
 
 impl PositionedPentonimo {
@@ -41,7 +41,7 @@ impl PositionedPentonimo {
     }
 
     pub fn shape(&self) -> (u8, u8) {
-        self.shape
+        self.pentonimo.shape()
     }
 
     pub fn pentonimo(&self) -> Pentonimo {
@@ -67,7 +67,6 @@ impl Pentonimo {
         PositionedPentonimo {
             pentonimo: self.normalize(),
             position: (x, y),
-            shape: self.shape(),
         }
     }
 
@@ -76,7 +75,7 @@ impl Pentonimo {
 
         macro_rules! permutations {
             (FLIP_ROTATE, $self: ident) => {{
-                let flipped = $self.flip_x();
+                let flipped = $self.flip_y();
                 VariantIterator::Asymetric(
                     [
                         $self,
@@ -175,9 +174,16 @@ fn number_of_variants() {
     assert!(PentonimoKind::VARIANTS
         .iter()
         .all(|&kind| Pentonimo::new(dbg!(kind)).variants().count() == expected_count(kind)));
+
+    let variants = PentonimoKind::VARIANTS
+        .iter()
+        .flat_map(|&kind| Pentonimo::new(dbg!(kind)).variants())
+        .collect::<HashSet<Pentonimo>>();
+
+    assert_eq!(variants.len(), 63);
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct PentonimoBounds {
     start_x: u8,
     end_x: u8,

@@ -1,3 +1,5 @@
+use std::fmt::{Debug, Display};
+
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use crate::tile_map::TileMap;
@@ -9,11 +11,23 @@ pub struct BfsScratch {
     candidates_2: FxHashSet<Point>,
 }
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Point(u16, u16);
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Path(Point, Point);
+
+impl Debug for Point {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}:{:?}", self.0, self.1)
+    }
+}
+
+impl Debug for Path {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} -> {:?}", self.0, self.1)
+    }
+}
 
 impl BfsScratch {
     pub fn new(shape: (u16, u16)) -> Self {

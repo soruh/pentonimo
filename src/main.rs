@@ -1,7 +1,8 @@
 use brute_force::find_best;
 use candidates::Candidates;
 use pathfinding::BfsScratch;
-use pentonimo::{Pentonimo, PentonimoKind};
+use pentonimo::{Pentonimo, PentonimoKind, PositionedPentonimo};
+use strum::VariantArray;
 use tile_map::TileMap;
 
 mod brute_force;
@@ -61,7 +62,35 @@ fn main() {
 
     dbg!(scratch.graph_diameter(&map));
 
-    dbg!(find_best((3, 3)));
-    dbg!(find_best((4, 4)));
-    dbg!(find_best((5, 5)));
+    for x in 3..=7 {
+        for y in 3..=7 {
+            compute_and_print(x, y);
+        }
+    }
+}
+
+fn compute_and_print(mx: u16, my: u16) {
+    print_res((mx, my), find_best((mx, my)));
+}
+
+fn print_res((mx, my): (u16, u16), (max, tiles): (u16, Vec<PositionedPentonimo>)) {
+    println!("({mx},{my}): {max}");
+
+    println!(
+        "tiles: {:?}",
+        tiles
+            .iter()
+            .map(|x| x.pentonimo().kind())
+            .collect::<Vec<_>>()
+    );
+
+    let mut map = TileMap::new((mx, my));
+
+    for &tile in &tiles {
+        assert!(map.can_place(tile));
+
+        map |= tile;
+    }
+
+    println!("{map}");
 }
