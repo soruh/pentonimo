@@ -7,21 +7,26 @@ use std::{
 pub struct Tile(pub u64);
 
 impl Tile {
+    #[inline]
     pub fn empty() -> Self {
         Self(0)
     }
+    #[inline]
     pub fn full() -> Self {
         Self(u64::MAX)
     }
+    #[inline]
     pub fn get(&self, x: u8, y: u8) -> bool {
         let index = 8 * y + x;
         (self.0 >> index) & 1 == 1
     }
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.0 == 0
     }
 
     #[must_use]
+    #[inline]
     pub fn shift_x(self, d: i8) -> Self {
         let mut bytes = self.0.to_le_bytes();
 
@@ -41,6 +46,7 @@ impl Tile {
     }
 
     #[must_use]
+    #[inline]
     pub fn shift_y(self, d: i8) -> Self {
         if d > 0 {
             let d = d as u32 * 8;
@@ -51,10 +57,12 @@ impl Tile {
         }
     }
 
+    #[inline]
     pub fn flip_xy(self) -> Self {
         Self(self.0.reverse_bits())
     }
 
+    #[inline]
     pub fn flip_x(self) -> Self {
         let mut bytes = self.0.to_le_bytes();
         for byte in &mut bytes {
@@ -63,12 +71,14 @@ impl Tile {
         Self(u64::from_le_bytes(bytes))
     }
 
+    #[inline]
     pub fn flip_y(self) -> Self {
         let mut bytes = self.0.to_le_bytes();
         bytes.reverse();
         Self(u64::from_le_bytes(bytes))
     }
 
+    #[inline]
     pub fn transpose(self) -> Self {
         let mut grid = self.0;
 
@@ -87,6 +97,7 @@ impl Tile {
         Self(grid)
     }
 
+    #[inline]
     pub fn rotate(self, rotate: Rotate) -> Self {
         match rotate {
             Rotate::Left => self.transpose().flip_y(),
@@ -95,6 +106,7 @@ impl Tile {
         }
     }
 
+    #[inline]
     pub fn fill_bottom(n_rows: u8) -> Self {
         const FIRST_ROW: u64 = 0xff000000_00000000;
 
@@ -105,6 +117,7 @@ impl Tile {
         Self(res)
     }
 
+    #[inline]
     pub fn fill_right(n_cols: u8) -> Self {
         const FIRST_COLUMN: u64 = 0x80808080_80808080;
 

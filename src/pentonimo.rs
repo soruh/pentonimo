@@ -293,6 +293,7 @@ impl Pentonimo {
         Self { kind, tile, bounds }
     }
 
+    #[inline]
     pub fn rotate(self, rotate: Rotate) -> Self {
         Self {
             kind: self.kind,
@@ -300,6 +301,7 @@ impl Pentonimo {
             tile: self.tile.rotate(rotate),
         }
     }
+    #[inline]
     pub fn shift_x(self, d: i8) -> Self {
         Self {
             kind: self.kind,
@@ -307,6 +309,7 @@ impl Pentonimo {
             tile: self.tile.shift_x(d),
         }
     }
+    #[inline]
     pub fn shift_y(self, d: i8) -> Self {
         Self {
             kind: self.kind,
@@ -314,6 +317,7 @@ impl Pentonimo {
             tile: self.tile.shift_y(d),
         }
     }
+    #[inline]
     pub fn flip_x(self) -> Self {
         Self {
             kind: self.kind,
@@ -321,6 +325,7 @@ impl Pentonimo {
             bounds: self.bounds.flip_x(),
         }
     }
+    #[inline]
     pub fn flip_y(self) -> Self {
         Self {
             kind: self.kind,
@@ -328,6 +333,7 @@ impl Pentonimo {
             bounds: self.bounds.flip_y(),
         }
     }
+    #[inline]
     pub fn flip_xy(self) -> Self {
         Self {
             kind: self.kind,
@@ -335,6 +341,7 @@ impl Pentonimo {
             bounds: self.bounds.flip_xy(),
         }
     }
+    #[inline]
     pub fn normalize(self) -> Self {
         Self {
             kind: self.kind,
@@ -345,9 +352,11 @@ impl Pentonimo {
             bounds: self.bounds.normalize(),
         }
     }
+    #[inline]
     pub fn is_empty(self) -> bool {
         self.tile.is_empty()
     }
+    #[inline]
     pub fn shift_split(self, x: i8, y: i8) -> [Tile; 4] {
         [(0, 0), (1, 0), (0, 1), (1, 1)].map(|(i, j)| {
             let dx = x - 8 * i;

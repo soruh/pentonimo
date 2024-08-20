@@ -46,6 +46,7 @@ impl Display for TileMap {
     }
 }
 
+#[inline]
 fn div_ceil(a: u16, b: u16) -> u16 {
     (a + b - 1) / b
 }
@@ -89,6 +90,7 @@ impl TileMap {
         }
     }
 
+    #[inline]
     pub fn can_place(&self, rhs: PositionedPentonimo) -> bool {
         let (x, y) = rhs.position();
         let parts = rhs.pentonimo().shift_split((x % 8) as i8, (y % 8) as i8);
@@ -109,11 +111,13 @@ impl TileMap {
         true
     }
 
+    #[inline]
     pub fn get_tile(&self, tx: u16, ty: u16) -> Tile {
         let tile_index = tx as usize + (ty as usize) * self.tile_shape().0;
         self.tiles[tile_index]
     }
 
+    #[inline]
     pub fn get(&self, x: u16, y: u16) -> bool {
         let (tx, ty) = (x / 8, y / 8);
         let (x, y) = (x % 8, y % 8);
@@ -123,6 +127,7 @@ impl TileMap {
 }
 
 impl BitOrAssign<PositionedPentonimo> for TileMap {
+    #[inline]
     fn bitor_assign(&mut self, rhs: PositionedPentonimo) {
         let (x, y) = rhs.position();
         let parts = rhs.pentonimo().shift_split((x % 8) as i8, (y % 8) as i8);
@@ -142,6 +147,7 @@ impl BitOrAssign<PositionedPentonimo> for TileMap {
 }
 
 impl BitAndAssign<PositionedPentonimo> for TileMap {
+    #[inline]
     fn bitand_assign(&mut self, rhs: PositionedPentonimo) {
         let (x, y) = rhs.position();
         let parts = rhs.pentonimo().shift_split((x % 8) as i8, (y % 8) as i8);
@@ -163,6 +169,7 @@ impl BitAndAssign<PositionedPentonimo> for TileMap {
 impl BitAnd<PositionedPentonimo> for TileMap {
     type Output = TileMap;
 
+    #[inline]
     fn bitand(mut self, rhs: PositionedPentonimo) -> Self::Output {
         self &= rhs;
         self
@@ -172,6 +179,7 @@ impl BitAnd<PositionedPentonimo> for TileMap {
 impl BitOr<PositionedPentonimo> for TileMap {
     type Output = TileMap;
 
+    #[inline]
     fn bitor(mut self, rhs: PositionedPentonimo) -> Self::Output {
         self |= rhs;
         self

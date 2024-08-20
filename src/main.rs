@@ -76,6 +76,7 @@ fn compute_and_print(mx: u16, my: u16) {
     print_res((mx, my), find_best((mx, my)));
 }
 
+// todo: produce nicer pictures (svg?)
 fn print_res((mx, my): (u16, u16), (max, tiles): (u16, Vec<PositionedPentonimo>)) {
     println!("({mx},{my}): {max}");
 

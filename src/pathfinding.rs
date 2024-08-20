@@ -6,9 +6,9 @@ use crate::tile_map::TileMap;
 
 pub struct BfsScratch {
     shape: (u16, u16),
-    visited: FxHashSet<Point>,
-    candidates_1: FxHashSet<Point>,
-    candidates_2: FxHashSet<Point>,
+    visited: Vec<bool>,
+    candidates_1: Vec<Point>,
+    candidates_2: Vec<Point>,
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
@@ -36,12 +36,9 @@ impl BfsScratch {
         let max_candidates = (max_width as usize / 2 * 4).max(1);
         Self {
             shape,
-            visited: FxHashSet::with_capacity_and_hasher(
-                shape.0 as usize * shape.1 as usize,
-                FxBuildHasher,
-            ),
-            candidates_1: FxHashSet::with_capacity_and_hasher(max_candidates, FxBuildHasher),
-            candidates_2: FxHashSet::with_capacity_and_hasher(max_candidates, FxBuildHasher),
+            visited: vec![false; shape.0 as usize * shape.1 as usize],
+            candidates_1: Vec::with_capacity(max_candidates),
+            candidates_2: Vec::with_capacity(max_candidates),
         }
     }
 
@@ -56,10 +53,15 @@ impl BfsScratch {
         }
 
         self.candidates_1.clear();
-        self.candidates_1.insert(start);
+        self.candidates_1.push(start);
 
-        self.visited.clear();
-        self.visited.insert(start);
+        #[inline]
+        fn index_for_point(shape: (u16, u16), p: Point) -> usize {
+            p.0 as usize + p.1 as usize * shape.0 as usize
+        }
+
+        self.visited.fill(false);
+        self.visited[index_for_point(self.shape, start)] = true;
 
         let mut prev = start;
 
@@ -71,7 +73,7 @@ impl BfsScratch {
             self.candidates_2.clear();
 
             for &candidate in &self.candidates_1 {
-                self.visited.insert(candidate);
+                self.visited[index_for_point(self.shape, candidate)] = true;
 
                 let dxs = (-1..=1).step_by(2).map(|d| (d, 0));
                 let dys = (-1..=1).step_by(2).map(|d| (0, d));
@@ -89,8 +91,8 @@ impl BfsScratch {
 
                     let p = Point(x as u16, y as u16);
 
-                    if !tile_map.get(p.0, p.1) && !self.visited.contains(&p) {
-                        self.candidates_2.insert(p);
+                    if !tile_map.get(p.0, p.1) && !self.visited[index_for_point(self.shape, p)] {
+                        self.candidates_2.push(p);
                         prev = p;
                     }
                 }

@@ -7,3 +7,9 @@ edition = "2021"
 rustc-hash = "2.0.0"
 smallvec = "1.13.2"
 strum = { version = "0.26.3", features = ["derive"] }
+
+[profile.release]
+debug = true
+lto = "thin"
+codegen-units = 1
+codegen-units-std = 1
