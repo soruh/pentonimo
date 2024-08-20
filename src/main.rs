@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use brute_force::find_best;
 use candidates::Candidates;
 use pathfinding::BfsScratch;
@@ -73,7 +75,7 @@ fn main() {
 }
 
 fn compute_and_print(mx: u16, my: u16) {
-    print_res((mx, my), find_best((mx, my)));
+    res_to_svg((mx, my), find_best((mx, my)));
 }
 
 // todo: produce nicer pictures (svg?)
@@ -103,4 +105,79 @@ fn print_res((mx, my): (u16, u16), (max, tiles): (u16, Vec<PositionedPentonimo>)
     println!("{path:?}");
 
     println!("{map}",);
+}
+
+// todo: produce nicer pictures (svg?)
+fn res_to_svg((mx, my): (u16, u16), (max, tiles): (u16, Vec<PositionedPentonimo>)) {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    enum Value {
+        Pentonimo(PentonimoKind),
+        Nothing,
+        Path(usize),
+    }
+
+    impl Display for Value {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                Value::Pentonimo(kind) => {
+                    let color = match kind {
+                        PentonimoKind::F => 31,
+                        PentonimoKind::L => 32,
+                        PentonimoKind::N => 33,
+                        PentonimoKind::P => 34,
+                        PentonimoKind::T => 35,
+                        PentonimoKind::U => 36,
+                        PentonimoKind::V => 41,
+                        PentonimoKind::W => 42,
+                        PentonimoKind::I => 43,
+                        PentonimoKind::X => 44,
+                        PentonimoKind::Y => 45,
+                        PentonimoKind::Z => 46,
+                    };
+
+                    write!(f, "\x1b[{color}mxx\x1b[m")
+                }
+                Value::Nothing => write!(f, ".."),
+                Value::Path(n) => write!(f, "{n:2}"),
+            }
+        }
+    }
+
+    let path = {
+        let mut map = TileMap::new((mx, my));
+        for &tile in &tiles {
+            assert!(map.can_place(tile));
+            map |= tile;
+        }
+        let mut scratch = BfsScratch::new((mx, my));
+        let (new_max, path) = scratch.graph_diameter(&map);
+        assert_eq!(new_max, max);
+        path
+    };
+
+    let mut grid = vec![Value::Nothing; mx as usize * my as usize];
+
+    for tile in &tiles {
+        for x in 0..8 {
+            for y in 0..8 {
+                let px = tile.position().0 + x as u16;
+                let py = tile.position().1 + y as u16;
+                // TODO: this is wrong
+
+                if px < mx && py < my && tile.pentonimo().tile().get(x, y) {
+                    let index = mx as usize * y as usize + x as usize;
+                    assert_eq!(grid[index], Value::Nothing);
+                    grid[index] = Value::Pentonimo(tile.pentonimo().kind());
+                }
+            }
+        }
+    }
+
+    println!("({mx},{my}): {max}");
+    for y in 0..my {
+        for x in 0..mx {
+            print!("{} ", grid[mx as usize * y as usize + x as usize]);
+        }
+        println!();
+    }
 }

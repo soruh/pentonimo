@@ -13,3 +13,4 @@ debug = true
 lto = "thin"
 codegen-units = 1
 # codegen-units-std = 1
+panic = "abort"

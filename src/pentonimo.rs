@@ -358,7 +358,9 @@ impl Pentonimo {
     }
     #[inline]
     pub fn shift_split(self, x: i8, y: i8) -> [Tile; 4] {
-        [(0, 0), (1, 0), (0, 1), (1, 1)].map(|(i, j)| {
+        let mut res = [Tile::empty(); 4];
+
+        for (k, (i, j)) in [(0, 0), (1, 0), (0, 1), (1, 1)].into_iter().enumerate() {
             let dx = x - 8 * i;
             let dy = y - 8 * j;
 
@@ -367,11 +369,11 @@ impl Pentonimo {
             let wy = shifted_bounds.end_y - shifted_bounds.start_y;
 
             if wx > 0 && wy > 0 {
-                self.tile.shift_x(dx).shift_y(dy)
-            } else {
-                Tile::empty()
+                res[k] = self.tile.shift_x(dx).shift_y(dy);
             }
-        })
+        }
+
+        res
     }
 }
 

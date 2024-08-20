@@ -130,16 +130,24 @@ impl Iterator for OffsetIterator {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let res = match self.0 {
-            0 => (-1, 0),
-            1 => (1, 0),
-            2 => (0, -1),
-            3 => (0, 1),
-            _ => {
-                return None;
-            }
-        };
-        self.0 += 1;
-        Some(res)
+        // let res = match self.0 {
+        //     0 => (-1, 0),
+        //     1 => (1, 0),
+        //     2 => (0, -1),
+        //     3 => (0, 1),
+        //     _ => {
+        //         return None;
+        //     }
+        // };
+        // self.0 += 1;
+        // Some(res)
+
+        if self.0 < 4 {
+            let i = self.0 as usize;
+            self.0 += 1;
+            Some([(-1, 0), (1, 0), (0, -1), (0, 1)][i])
+        } else {
+            None
+        }
     }
 }
