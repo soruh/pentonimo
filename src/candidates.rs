@@ -50,7 +50,7 @@ impl Candidates {
         ((self.0 & Self::mask(i)) >> (5 * i)) as u8
     }
     pub fn set(&mut self, i: u8, v: u8) {
-        assert!(v < 0b100000);
+        debug_assert!(v < 0b100000);
 
         self.0 = (self.0 & !Self::mask(i)) | ((v as u64) << (5 * i));
     }
@@ -63,7 +63,7 @@ impl Candidates {
         let mut res: u64 = 0;
 
         for (i, &v) in candidates.iter().enumerate() {
-            assert!(v < 0b100000);
+            debug_assert!(v < 0b100000);
             res |= ((v & 0b11111) as u64) << (5 * i);
         }
 

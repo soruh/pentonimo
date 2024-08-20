@@ -18,7 +18,7 @@ impl Tile {
     #[inline]
     pub fn get(&self, x: u8, y: u8) -> bool {
         let index = 8 * y + x;
-        (self.0 >> index) & 1 == 1
+        self.0 & (1 << index) != 0
     }
     #[inline]
     pub fn is_empty(&self) -> bool {
@@ -28,21 +28,50 @@ impl Tile {
     #[must_use]
     #[inline]
     pub fn shift_x(self, d: i8) -> Self {
-        let mut bytes = self.0.to_le_bytes();
+        // let mut bytes = self.0.to_le_bytes();
+        // if d > 0 {
+        //     let d = d as u32;
+        //     for byte in &mut bytes {
+        //         *byte <<= d;
+        //     }
+        // } else {
+        //     let d = (-d) as u32;
+        //     for byte in &mut bytes {
+        //         *byte >>= d;
+        //     }
+        // }
+        // let res1 = Self(u64::from_le_bytes(bytes));
 
-        if d > 0 {
-            let d = d as u32;
-            for byte in &mut bytes {
-                *byte <<= d;
+        let mut bytes = self.0;
+        match d.cmp(&0) {
+            std::cmp::Ordering::Greater => {
+                let d = d as u32;
+                bytes <<= d;
+                // mask out bits that should be shifted out of each byte
+                let mask = 0x0101_0101_0101_0101_u64 * ((1 << d) - 1);
+                bytes &= !mask;
             }
-        } else {
-            let d = (-d) as u32;
-            for byte in &mut bytes {
-                *byte >>= d;
+            std::cmp::Ordering::Less => {
+                let d = (-d) as u32;
+                bytes >>= d;
+                // mask out bits that should be shifted out of each byte
+                let mask = 0x0101_0101_0101_0101_u64 * ((1 << d) - 1);
+                bytes &= !(mask << (8 - d));
             }
+            std::cmp::Ordering::Equal => {}
         }
 
-        Self(u64::from_le_bytes(bytes))
+        let res2 = Self(bytes);
+
+        // assert!(
+        //     res1 == res2,
+        //     "failed for {:064b} << {d}.\n  Expected {:064b}\n       got {:064b}",
+        //     self.0,
+        //     res1.0,
+        //     res2.0
+        // );
+
+        res2
     }
 
     #[must_use]

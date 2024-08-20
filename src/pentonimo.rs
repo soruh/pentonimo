@@ -361,8 +361,12 @@ impl Pentonimo {
         [(0, 0), (1, 0), (0, 1), (1, 1)].map(|(i, j)| {
             let dx = x - 8 * i;
             let dy = y - 8 * j;
-            // TODO: is this always the correct shift amount?
-            if dx.abs() < 8 && dy.abs() < 8 {
+
+            let shifted_bounds = self.bounds.shift_x(dx).shift_y(dy);
+            let wx = shifted_bounds.end_x - shifted_bounds.start_x;
+            let wy = shifted_bounds.end_y - shifted_bounds.start_y;
+
+            if wx > 0 && wy > 0 {
                 self.tile.shift_x(dx).shift_y(dy)
             } else {
                 Tile::empty()

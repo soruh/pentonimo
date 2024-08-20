@@ -44,7 +44,7 @@ impl BfsScratch {
 
     // bfs search to find eccentricity
     pub fn eccentricity(&mut self, tile_map: &TileMap, x: u16, y: u16) -> (u16, Point) {
-        assert_eq!(self.shape, tile_map.shape);
+        debug_assert_eq!(self.shape, tile_map.shape);
 
         let start = Point(x, y);
 
@@ -102,7 +102,7 @@ impl BfsScratch {
     }
 
     pub fn graph_diameter(&mut self, tile_map: &TileMap) -> (u16, Path) {
-        assert_eq!(self.shape, tile_map.shape);
+        debug_assert_eq!(self.shape, tile_map.shape);
 
         let mut maximum = None;
         let mut max_coords = None;
@@ -130,14 +130,16 @@ impl Iterator for OffsetIterator {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        if self.0 < 4 {
-            let res = (2 * (self.0 / 2) as i32 - 1, 2 * (self.0 % 2) as i32 - 1);
-
-            self.0 += 1;
-
-            Some(res)
-        } else {
-            None
-        }
+        let res = match self.0 {
+            0 => (-1, 0),
+            1 => (1, 0),
+            2 => (0, -1),
+            3 => (0, 1),
+            _ => {
+                return None;
+            }
+        };
+        self.0 += 1;
+        Some(res)
     }
 }
