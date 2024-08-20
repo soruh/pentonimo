@@ -62,9 +62,12 @@ fn main() {
 
     dbg!(scratch.graph_diameter(&map));
 
-    for x in 3..=7 {
-        for y in 3..=7 {
-            compute_and_print(x, y);
+    let max = 6;
+    for x in 3..=max {
+        for y in 3..=max {
+            if x >= y {
+                compute_and_print(x, y);
+            }
         }
     }
 }
@@ -92,5 +95,11 @@ fn print_res((mx, my): (u16, u16), (max, tiles): (u16, Vec<PositionedPentonimo>)
         map |= tile;
     }
 
-    println!("{map}");
+    let mut scratch = BfsScratch::new((mx, my));
+
+    let (new_max, path) = scratch.graph_diameter(&map);
+    assert_eq!(new_max, max);
+    println!("{path:?}");
+
+    println!("{map}",);
 }

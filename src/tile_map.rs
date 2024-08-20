@@ -23,8 +23,8 @@ impl Display for TileMap {
             (self.shape.0, self.shape.1)
         };
 
-        for y in 0..x_max {
-            for x in 0..y_max {
+        for y in 0..y_max {
+            for x in 0..x_max {
                 let tile_x = (x / 8) as usize;
                 let tile_y = (y / 8) as usize;
 
