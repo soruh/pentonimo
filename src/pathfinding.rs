@@ -75,10 +75,7 @@ impl BfsScratch {
             for &candidate in &self.candidates_1 {
                 self.visited[index_for_point(self.shape, candidate)] = true;
 
-                let dxs = (-1..=1).step_by(2).map(|d| (d, 0));
-                let dys = (-1..=1).step_by(2).map(|d| (0, d));
-
-                for (dx, dy) in dxs.chain(dys) {
+                for (dx, dy) in OffsetIterator::default() {
                     let x = candidate.0 as i32 + dx;
                     let y = candidate.1 as i32 + dy;
 
@@ -122,5 +119,25 @@ impl BfsScratch {
         }
 
         (maximum.unwrap(), max_coords.unwrap())
+    }
+}
+
+#[derive(Default)]
+struct OffsetIterator(u8);
+
+impl Iterator for OffsetIterator {
+    type Item = (i32, i32);
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.0 < 4 {
+            let res = (2 * (self.0 / 2) as i32 - 1, 2 * (self.0 % 2) as i32 - 1);
+
+            self.0 += 1;
+
+            Some(res)
+        } else {
+            None
+        }
     }
 }
