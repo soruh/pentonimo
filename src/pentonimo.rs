@@ -1,6 +1,4 @@
-use std::{collections::HashSet, fmt::Display, ops::Range};
-
-use strum::VariantArray;
+use std::{fmt::Display, ops::Range};
 
 use crate::tile::{Rotate, Tile};
 
@@ -46,6 +44,13 @@ impl PositionedPentonimo {
 
     pub fn pentonimo(&self) -> Pentonimo {
         self.pentonimo
+    }
+
+    pub fn get(&self, x: u16, y: u16) -> bool {
+        let dx = (8 + x - self.position.0) % 8;
+        let dy = (8 + y - self.position.1) % 8;
+
+        self.pentonimo.tile().get(dx as u8, dy as u8)
     }
 }
 
@@ -145,6 +150,9 @@ impl Iterator for VariantIterator {
 
 #[test]
 fn number_of_variants() {
+    use std::collections::HashSet;
+    use strum::VariantArray;
+
     fn expected_count(kind: PentonimoKind) -> usize {
         match kind {
             PentonimoKind::F => 8,

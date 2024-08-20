@@ -1,1 +1,4 @@
 /target
+/results
+perf.data*
+flamegraph.svg

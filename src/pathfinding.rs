@@ -1,6 +1,6 @@
-use std::fmt::{Debug, Display};
+use std::{cmp::Reverse, collections::BinaryHeap, fmt::Debug, u64};
 
-use rustc_hash::{FxBuildHasher, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use crate::tile_map::TileMap;
 
@@ -11,11 +11,11 @@ pub struct BfsScratch {
     candidates_2: Vec<Point>,
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq)]
-pub struct Point(u16, u16);
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Point(pub u16, pub u16);
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq)]
-pub struct Path(Point, Point);
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Path(pub Point, pub Point);
 
 impl Debug for Point {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -150,4 +150,94 @@ impl Iterator for OffsetIterator {
             None
         }
     }
+}
+
+#[derive(Copy, Clone)]
+struct Vertex {
+    cost: u64,
+    position: Point,
+}
+impl PartialEq for Vertex {
+    fn eq(&self, other: &Self) -> bool {
+        self.cost == other.cost
+    }
+}
+impl Eq for Vertex {}
+impl PartialOrd for Vertex {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cost.cmp(&other.cost))
+    }
+}
+impl Ord for Vertex {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.cost
+            .cmp(&other.cost)
+            .then_with(|| self.position.cmp(&other.position))
+    }
+}
+
+// https://doc.rust-lang.org/std/collections/binary_heap/index.html
+pub fn dijkstra(map: &TileMap, Path(start, goal): Path) -> Vec<Point> {
+    let mut queue = BinaryHeap::new();
+    let mut dist = FxHashMap::<Point, u64>::default();
+    let mut prev = FxHashMap::<Point, Point>::default();
+
+    dist.insert(start, 0);
+    queue.push(Vertex {
+        cost: 0,
+        position: start,
+    });
+
+    while let Some(Vertex { cost, position }) = queue.pop() {
+        // We have found a shortest path
+        if position == goal {
+            break;
+        }
+
+        // Important as we may have already found a better way
+        if cost > dist[&position] {
+            continue;
+        }
+
+        // For each node we can reach, see if we can find a way with
+        // a lower cost going through this node
+        for (dx, dy) in OffsetIterator::default() {
+            let vx = position.0 as i32 + dx;
+            let vy = position.1 as i32 + dy;
+
+            if vx >= 0
+                && vx < map.shape.0 as i32
+                && vy >= 0
+                && vy < map.shape.1 as i32
+                && !map.get(vx as u16, vy as u16)
+            {
+                let next = Vertex {
+                    cost: cost + 1,
+                    position: Point(vx as u16, vy as u16),
+                };
+
+                // If so, add it to the frontier and continue
+                if next.cost < dist.get(&next.position).copied().unwrap_or(u64::MAX) {
+                    queue.push(next);
+                    // Relaxation, we have now found a better way
+                    dist.insert(next.position, next.cost);
+                    prev.insert(next.position, position);
+                }
+            }
+        }
+    }
+
+    let mut path = Vec::with_capacity(dist[&goal] as usize + 1);
+
+    let mut p = goal;
+
+    while p != start {
+        path.push(p);
+        p = prev[&p];
+    }
+
+    path.push(start);
+    path.reverse();
+
+    path
 }

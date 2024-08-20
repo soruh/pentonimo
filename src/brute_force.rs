@@ -62,6 +62,7 @@ impl DfsState {
                         let mut available = key.available;
                         available.decrement(positioned.pentonimo().kind() as u8);
 
+                        // if mx == my also check for key.mirror_xy()
                         let key = StateKey { map, available };
                         if !self.states.contains_key(&key) {
                             let (max_diameter, mut new_placed) = self.bfs(key, diameter);
