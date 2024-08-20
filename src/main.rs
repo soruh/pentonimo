@@ -66,9 +66,8 @@ fn main() {
 
     _ = std::fs::create_dir("results");
 
-    let max = 6;
-    for x in 3..=max {
-        for y in 3..=max {
+    for x in 3..=9 {
+        for y in 3..=6 {
             if x >= y {
                 let (max, tiles) = find_best((x, y));
                 let grid = build_print_map((x, y), (max, tiles));
@@ -176,7 +175,7 @@ impl Printer for SvgPrinter {
     fn print(&self, shape: (u16, u16), max: u16, grid: &[PrintValue]) {
         let mut file = File::create(&self.0).unwrap();
 
-        let scale = 10;
+        let scale = 100;
 
         let mut write = || {
             writeln!(
@@ -189,37 +188,6 @@ impl Printer for SvgPrinter {
             for y in 0..shape.1 {
                 for x in 0..shape.0 {
                     let index = shape.0 as usize * y as usize + x as usize;
-
-                    // match grid[index] {
-                    //     PrintValue::Pentonimo(kind) => {
-                    //         write!(
-                    //             file,
-                    //             r#"<rect x="{x}" y="{y}" width="{scale}" height="{scale}" fill="red" />"#,
-                    //         )?; // stroke="black"
-                    //     }
-                    //     PrintValue::Nothing => {}
-                    //     PrintValue::Path(n) => {
-                    //         writeln!(
-                    //             file,
-                    //             r#"
-                    //             <g>
-                    //             <rect x="{x}" y="{y}" width="{scale}" height="{scale}" fill="none" />
-                    //             <text
-                    //                 x="{}"
-                    //                 y="{}"
-                    //                 dominant-baseline="middle"
-                    //                 text-anchor="middle"
-                    //                 font-size="1"
-                    //             >
-                    //                 {n}
-                    //             </text>
-                    //             </g>
-                    //         "#,
-                    //             x + scale / 2,
-                    //             y + scale / 2
-                    //         )?;
-                    //     }
-                    // }
 
                     let color = match grid[index] {
                         PrintValue::Pentonimo(kind) => match kind {
