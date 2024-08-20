@@ -29,7 +29,7 @@ struct DfsState {
 }
 
 impl DfsState {
-    fn bfs(&mut self, key: StateKey, prev_diameter: u16) -> (u16, Vec<PositionedPentonimo>) {
+    fn dfs(&mut self, key: StateKey, prev_diameter: u16) -> (u16, Vec<PositionedPentonimo>) {
         let (diameter, _) = self.scratch.graph_diameter(&key.map);
 
         if diameter < prev_diameter {
@@ -65,7 +65,7 @@ impl DfsState {
                         // if mx == my also check for key.mirror_xy()
                         let key = StateKey { map, available };
                         if !self.states.contains_key(&key) {
-                            let (max_diameter, mut new_placed) = self.bfs(key, diameter);
+                            let (max_diameter, mut new_placed) = self.dfs(key, diameter);
 
                             if max_diameter > current_max {
                                 current_max = max_diameter;
@@ -98,7 +98,7 @@ pub fn find_best(shape: (u16, u16)) -> (u16, Vec<PositionedPentonimo>) {
         map,
         available: Candidates::new([1; 12]),
     };
-    let (max, placed) = state.bfs(key, diameter);
+    let (max, placed) = state.dfs(key, diameter);
 
     assert_eq!(max, *state.states.values().max().unwrap());
 
